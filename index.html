@@ -4,119 +4,193 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Staff KPI Management</title>
-  <script src="https://www.gstatic.com/firebasejs/9.19.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.19.1/firebase-firestore.js"></script>
-  <script>
-    // Firebase configuration (replace with your actual config)
+  <title>Staff KPIs Dashboard</title>
+
+  <!-- Import Firebase via CDN -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
     const firebaseConfig = {
-      apiKey: "your-api-key",
-      authDomain: "your-auth-domain",
-      projectId: "your-project-id",
-      storageBucket: "your-storage-bucket",
-      messagingSenderId: "your-sender-id",
-      appId: "your-app-id"
+      apiKey: "AIzaSyBlXR9-doF3ScNlKrec7wTVeejZ3dzEgb0",
+      authDomain: "pms-ef53f.firebaseapp.com",
+      projectId: "pms-ef53f",
+      storageBucket: "pms-ef53f.appspot.com",
+      messagingSenderId: "1097061442330",
+      appId: "1:1097061442330:web:e2713a81ef3c8cce3c02a3",
+      measurementId: "G-T4DP2JELKZ"
     };
 
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
 
-    const staffData = []; // Holds the staff data for leaderboard
+    // Function to add new staff to the "database" collection
+    window.addStaff = async () => {
+      const staffId = document.getElementById('staffId').value;
+      const staffName = document.getElementById('staffName').value;
 
-    const weightage = {
-      "Compliance to Mandatory Licenses": 10,
-      "Participation in Non Clinical Activities": 5,
-      "Communication Skills": 10,
-      "Compliance to Infection Control Guidelines": 10,
-      "Document Completion & Accuracy": 5,
-      "Dress Code Compliance": 5,
-      "Compliance to IPSG/ESR Standards": 5,
-      "Compliance to Patient Care Management": 10,
-      "Works Hard": 10,
-      "Focuses on Efficiency": 10,
-      "Produces Quality Work": 10,
-      "Open Minded": 5,
-      "Supports the Team": 5
-    };
-
-    const generateWeightageTable = () => {
-      const weightageTable = document.getElementById('weightageTable');
-      weightageTable.innerHTML = ''; // Clear previous data
-
-      for (let [criteria, score] of Object.entries(weightage)) {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${criteria}</td>
-          <td>${score}</td>
-        `;
-        weightageTable.appendChild(row);
+      if (staffId && staffName) {
+        try {
+          await setDoc(doc(db, "KPI", staffId), {
+            staffId: staffId,
+            staffName: staffName
+          });
+          alert('Staff added successfully!');
+          loadStaff();
+        } catch (error) {
+          console.error('Error adding staff:', error);
+        }
+      } else {
+        alert('Please fill out both Staff ID and Name.');
       }
     };
 
-    const saveKPI = (staffId, staffName, kpiScores) => {
-      // Calculate the total score based on weightages
-      let totalScore = 0;
-      let weightageTotal = 0;
-      
-      Object.keys(kpiScores).forEach((kpi, index) => {
-        const score = kpiScores[kpi] || 0;
-        const weight = weightage[kpi];
-        totalScore += score * (weight / 100); // Multiply by the weightage (as percentage)
-        weightageTotal += weight;
-      });
+    // Function to load the staff list and display evaluation criteria
+    window.loadStaff = async () => {
+      const staffTable = document.getElementById('staffTable');
+      staffTable.innerHTML = '';
 
-      // Save data to Firebase
-      db.collection("KPI").add({
-        staffId,
-        staffName,
-        kpiScores,
-        totalScore
-      })
-      .then(() => {
-        alert("Data saved successfully!");
-        loadStaff();
-      })
-      .catch((error) => {
-        console.error("Error saving KPI data: ", error);
-      });
+      try {
+        const querySnapshot = await getDocs(collection(db, "KPI"));
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${data.staffId}</td>
+            <td>${data.staffName}</td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="complianceLicenses" placeholder="Compliance %" value="${data.complianceLicenses || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="nonClinicalParticipation" placeholder="Non-Clinical %" value="${data.nonClinicalParticipation || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="communicationSkills" placeholder="Communication" value="${data.communicationSkills || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="infectionControlCompliance" placeholder="Infection %" value="${data.infectionControlCompliance || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="documentAccuracy" placeholder="Accuracy %" value="${data.documentAccuracy || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="dressCode" placeholder="Dress Code" value="${data.dressCode || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="ipsgCompliance" placeholder="IPSG %" value="${data.ipsgCompliance || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="careCompliance" placeholder="Care %" value="${data.careCompliance || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="worksHard" placeholder="Works Hard" value="${data.worksHard || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="focusesOnEfficiency" placeholder="Focuses on Efficiency" value="${data.focusesOnEfficiency || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="producesQualityWork" placeholder="Produces Quality Work" value="${data.producesQualityWork || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="openMinded" placeholder="Open Minded" value="${data.openMinded || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="supportsTheTeam" placeholder="Supports the Team" value="${data.supportsTheTeam || ''}"></td>
+            <td><button onclick="saveKPI('${data.staffId}')">Save</button></td>
+          `;
+          staffTable.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Error loading staff:', error);
+      }
     };
 
-    const loadStaff = async () => {
-      const querySnapshot = await getDocs(collection(db, "KPI"));
-      staffData.length = 0; // Clear the staff data array
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        staffData.push(data); // Add data to the array
+    // Function to save the input data for each staff
+    window.saveKPI = async (staffId) => {
+      const criteriaInputs = document.querySelectorAll(`.criteria-input[data-staff-id="${staffId}"]`);
+      const kpiData = {};
+      const targetData = {
+        complianceLicenses: 100,
+        nonClinicalParticipation: 90,
+        communicationSkills: 80,
+        infectionControlCompliance: 100,
+        documentAccuracy: 100,
+        dressCode: 10,
+        ipsgCompliance: 100,
+        careCompliance: 95,
+        worksHard: 5,
+        focusesOnEfficiency: 5,
+        producesQualityWork: 5,
+        openMinded: 5,
+        supportsTheTeam: 10
+      };
+
+      criteriaInputs.forEach(input => {
+        const criteria = input.dataset.criteria;
+        const target = targetData[criteria] || 0;
+        const targetAchieved = input.value ? parseFloat(input.value) : 0;
+        const weightage = (criteria === 'worksHard' || criteria === 'focusesOnEfficiency' || criteria === 'producesQualityWork' || criteria === 'openMinded') ? 5 : (criteria === 'supportsTheTeam' ? 10 : 0);
+        const weightageAchieved = ((targetAchieved / target) * weightage) || 0;
+        
+        kpiData[criteria] = input.value ? parseFloat(input.value) : null;
+        kpiData[`${criteria}WeightageAchieved`] = weightageAchieved;
       });
 
-      // Generate leaderboard based on totalScore
-      generateLeaderboard();
+      try {
+        await updateDoc(doc(db, "KPI", staffId), kpiData);
+        alert('Data saved successfully!');
+        loadStaff(); // Auto-refresh the page
+      } catch (error) {
+        console.error('Error saving KPI data:', error);
+      }
     };
 
-    const generateLeaderboard = () => {
-      const leaderboardTable = document.getElementById('leaderboardTable');
-      leaderboardTable.innerHTML = ''; // Clear previous leaderboard
+    // Function to generate the Weightage Score Table
+    window.generateWeightageTable = async () => {
+      const weightageTable = document.getElementById('weightageTable');
+      const weightageData = {
+        complianceLicenses: 10,
+        nonClinicalParticipation: 5,
+        communicationSkills: 5,
+        infectionControlCompliance: 10,
+        documentAccuracy: 10,
+        dressCode: 10,
+        ipsgCompliance: 10,
+        careCompliance: 10,
+        worksHard: 5,
+        focusesOnEfficiency: 5,
+        producesQualityWork: 5,
+        openMinded: 5,
+        supportsTheTeam: 10
+      };
 
-      staffData.sort((a, b) => b.totalScore - a.totalScore); // Sort staff by totalScore
-
-      staffData.forEach((staff, index) => {
+      Object.entries(weightageData).forEach(([criteria, weight]) => {
         const row = document.createElement('tr');
         row.innerHTML = `
-          <td>${index + 1}</td>
-          <td>${staff.staffName}</td>
-          <td>${staff.totalScore.toFixed(2)}</td>
+          <td>${criteria}</td>
+          <td>${weight}</td>
         `;
-        leaderboardTable.appendChild(row);
+        weightageTable.appendChild(row);
       });
     };
 
+    // Function to generate the Leaderboard
+    window.generateLeaderboard = async () => {
+      const leaderboardTable = document.getElementById('leaderboardTable');
+      leaderboardTable.innerHTML = '';
+      
+      try {
+        const querySnapshot = await getDocs(collection(db, "KPI"));
+        const staffData = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const totalScore = Object.keys(data).reduce((acc, key) => {
+            if (key.includes('WeightageAchieved')) acc += data[key] || 0;
+            return acc;
+          }, 0);
+          const avgScore = totalScore / 14; // Average based on 14 criteria
+          staffData.push({ staffId: data.staffId, staffName: data.staffName, avgScore });
+        });
+
+        staffData.sort((a, b) => b.avgScore - a.avgScore); // Sort by avg score
+
+        staffData.forEach((staff, index) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${staff.staffName}</td>
+            <td>${staff.avgScore.toFixed(2)}</td>
+          `;
+          leaderboardTable.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Error generating leaderboard:', error);
+      }
+    };
+
+    // Initialize and load staff data on page load
     window.onload = () => {
-      generateWeightageTable(); // Generate weightage table when the page loads
-      loadStaff(); // Load existing staff data
+      loadStaff();
+      generateWeightageTable();
+      generateLeaderboard();
     };
   </script>
-  
+
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -223,7 +297,7 @@
         <tr>
           <th>Rank</th>
           <th>Staff Name</th>
-          <th>Total Score</th>
+          <th>Average Score</th>
         </tr>
       </thead>
       <tbody id="leaderboardTable"></tbody>
