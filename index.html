@@ -66,6 +66,11 @@
             <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="dressCode" placeholder="Dress Code" value="${data.dressCode || ''}"></td>
             <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="ipsgCompliance" placeholder="IPSG %" value="${data.ipsgCompliance || ''}"></td>
             <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="careCompliance" placeholder="Care %" value="${data.careCompliance || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="worksHard" placeholder="Works Hard" value="${data.worksHard || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="focusesOnEfficiency" placeholder="Focuses on Efficiency" value="${data.focusesOnEfficiency || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="producesQualityWork" placeholder="Produces Quality Work" value="${data.producesQualityWork || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="openMinded" placeholder="Open Minded" value="${data.openMinded || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="supportsTheTeam" placeholder="Supports the Team" value="${data.supportsTheTeam || ''}"></td>
             <td><button onclick="saveKPI('${data.staffId}')">Save</button></td>
           `;
           staffTable.appendChild(row);
@@ -79,9 +84,31 @@
     window.saveKPI = async (staffId) => {
       const criteriaInputs = document.querySelectorAll(`.criteria-input[data-staff-id="${staffId}"]`);
       const kpiData = {};
+      const targetData = {
+        complianceLicenses: 100,
+        nonClinicalParticipation: 90,
+        communicationSkills: 80,
+        infectionControlCompliance: 100,
+        documentAccuracy: 100,
+        dressCode: 10,
+        ipsgCompliance: 100,
+        careCompliance: 95,
+        worksHard: 5,
+        focusesOnEfficiency: 5,
+        producesQualityWork: 5,
+        openMinded: 5,
+        supportsTheTeam: 10
+      };
 
       criteriaInputs.forEach(input => {
-        kpiData[input.dataset.criteria] = input.value ? parseFloat(input.value) : null;
+        const criteria = input.dataset.criteria;
+        const target = targetData[criteria] || 0;
+        const targetAchieved = input.value ? parseFloat(input.value) : 0;
+        const weightage = (criteria === 'worksHard' || criteria === 'focusesOnEfficiency' || criteria === 'producesQualityWork' || criteria === 'openMinded') ? 5 : (criteria === 'supportsTheTeam' ? 10 : 0);
+        const weightageAchieved = ((targetAchieved / target) * weightage) || 0;
+        
+        kpiData[criteria] = input.value ? parseFloat(input.value) : null;
+        kpiData[`${criteria}WeightageAchieved`] = weightageAchieved;
       });
 
       try {
@@ -90,20 +117,6 @@
         loadStaff(); // Auto-refresh the page
       } catch (error) {
         console.error('Error saving KPI data:', error);
-      }
-    };
-
-    // Function to apply a preset value to all staff for a specific criterion
-    window.applyPresetValue = () => {
-      const presetValue = document.getElementById('presetValue').value;
-      const criteria = document.getElementById('criteriaSelect').value;
-
-      if (presetValue && criteria) {
-        document.querySelectorAll(`.criteria-input[data-criteria="${criteria}"]`).forEach(input => {
-          input.value = presetValue;
-        });
-      } else {
-        alert('Please select a criterion and enter a preset value.');
       }
     };
 
@@ -127,85 +140,70 @@
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-bottom: 20px;
+      margin: 20px 0;
     }
 
     th, td {
-      border: 1px solid #333;
       padding: 10px;
       text-align: center;
+      border: 1px solid #ddd;
     }
 
     th {
-      background-color: #1f1f1f;
+      background-color: #333;
     }
 
-    input[type="number"] {
-      background-color: #2c2c2c;
+    .criteria-input {
+      background-color: #212121;
       color: #fff;
-      border: 1px solid #444;
+      border: none;
       padding: 5px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     button {
-      background-color: #6200ea;
-      color: #fff;
+      background-color: #28a745;
+      color: white;
       border: none;
-      padding: 10px 15px;
+      padding: 10px;
       cursor: pointer;
     }
 
     button:hover {
-      background-color: #3700b3;
-    }
-
-    .form-container {
-      margin-bottom: 20px;
+      background-color: #218838;
     }
   </style>
 </head>
 
 <body>
   <div class="container">
-    <h1>Staff KPIs Dashboard</h1>
-
-    <div class="form-container">
-      <h2>Add New Staff</h2>
+    <h2>Staff KPI Management</h2>
+    <form id="staffForm">
       <input type="text" id="staffId" placeholder="Staff ID" required>
       <input type="text" id="staffName" placeholder="Staff Name" required>
-      <button onclick="addStaff()">Add Staff</button>
-    </div>
+      <button type="button" onclick="addStaff()">Add Staff</button>
+    </form>
 
-    <div class="form-container">
-      <h2>Apply Preset Value</h2>
-      <input type="number" id="presetValue" placeholder="Enter value" required>
-      <select id="criteriaSelect">
-        <option value="complianceLicenses">Compliance to Licenses</option>
-        <option value="nonClinicalParticipation">Non-Clinical Participation</option>
-        <option value="communicationSkills">Communication Skills</option>
-        <option value="infectionControlCompliance">Infection Control Compliance</option>
-        <option value="documentAccuracy">Document Accuracy</option>
-        <option value="dressCode">Dress Code</option>
-        <option value="ipsgCompliance">IPSG Compliance</option>
-        <option value="careCompliance">Patient Care Compliance</option>
-      </select>
-      <button onclick="applyPresetValue()">Apply to All</button>
-    </div>
-
-    <h2>Staff Evaluation Table</h2>
+    <h3>Staff KPI Entries</h3>
     <table>
       <thead>
         <tr>
           <th>Staff ID</th>
           <th>Staff Name</th>
-          <th>Compliance to Licenses (%)</th>
-          <th>Non-Clinical Participation (%)</th>
+          <th>% Compliance to Mandatory Licenses</th>
+          <th>% Participation in Non Clinical Activities</th>
           <th>Communication Skills</th>
-          <th>Infection Control Compliance (%)</th>
-          <th>Document Accuracy (%)</th>
-          <th>Dress Code</th>
-          <th>IPSG Compliance (%)</th>
-          <th>Patient Care Compliance (%)</th>
+          <th>Compliance to Infection Control Guidelines</th>
+          <th>Document Completion & Accuracy</th>
+          <th>Dress Code Compliance</th>
+          <th>% Compliance to IPSG/ESR Standards</th>
+          <th>% Compliance to Patient Care Management</th>
+          <th>Works Hard</th>
+          <th>Focuses on Efficiency</th>
+          <th>Produces Quality Work</th>
+          <th>Open Minded</th>
+          <th>Supports the Team</th>
           <th>Action</th>
         </tr>
       </thead>
