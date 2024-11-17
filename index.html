@@ -31,7 +31,7 @@
 
       if (staffId && staffName) {
         try {
-          await setDoc(doc(db, "database", staffId), {
+          await setDoc(doc(db, "KPI", staffId), {
             staffId: staffId,
             staffName: staffName
           });
@@ -51,21 +51,21 @@
       staffTable.innerHTML = '';
 
       try {
-        const querySnapshot = await getDocs(collection(db, "database"));
+        const querySnapshot = await getDocs(collection(db, "KPI"));
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           const row = document.createElement('tr');
           row.innerHTML = `
             <td>${data.staffId}</td>
             <td>${data.staffName}</td>
-            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="complianceLicenses" placeholder="Compliance %"></td>
-            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="nonClinicalParticipation" placeholder="Non-Clinical %"></td>
-            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="communicationSkills" placeholder="Communication"></td>
-            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="infectionControlCompliance" placeholder="Infection %"></td>
-            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="documentAccuracy" placeholder="Accuracy %"></td>
-            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="dressCode" placeholder="Dress Code"></td>
-            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="ipsgCompliance" placeholder="IPSG %"></td>
-            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="careCompliance" placeholder="Care %"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="complianceLicenses" placeholder="Compliance %" value="${data.complianceLicenses || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="nonClinicalParticipation" placeholder="Non-Clinical %" value="${data.nonClinicalParticipation || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="communicationSkills" placeholder="Communication" value="${data.communicationSkills || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="infectionControlCompliance" placeholder="Infection %" value="${data.infectionControlCompliance || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="documentAccuracy" placeholder="Accuracy %" value="${data.documentAccuracy || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="dressCode" placeholder="Dress Code" value="${data.dressCode || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="ipsgCompliance" placeholder="IPSG %" value="${data.ipsgCompliance || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="careCompliance" placeholder="Care %" value="${data.careCompliance || ''}"></td>
             <td><button onclick="saveKPI('${data.staffId}')">Save</button></td>
           `;
           staffTable.appendChild(row);
@@ -75,22 +75,35 @@
       }
     };
 
-    // Function to save the KPIs for a specific staff
+    // Function to save the input data for each staff
     window.saveKPI = async (staffId) => {
-      const kpis = {};
-      document.querySelectorAll(`.criteria-input[data-staff-id="${staffId}"]`).forEach(input => {
-        kpis[input.dataset.criteria] = input.value;
+      const criteriaInputs = document.querySelectorAll(`.criteria-input[data-staff-id="${staffId}"]`);
+      const kpiData = {};
+
+      criteriaInputs.forEach(input => {
+        kpiData[input.dataset.criteria] = input.value ? parseFloat(input.value) : null;
       });
 
-      if (Object.keys(kpis).length > 0) {
-        try {
-          await setDoc(doc(db, "KPI", staffId), kpis);
-          alert('KPI saved successfully!');
-        } catch (error) {
-          console.error('Error saving KPI:', error);
-        }
+      try {
+        await updateDoc(doc(db, "KPI", staffId), kpiData);
+        alert('Data saved successfully!');
+        loadStaff(); // Auto-refresh the page
+      } catch (error) {
+        console.error('Error saving KPI data:', error);
+      }
+    };
+
+    // Function to apply a preset value to all staff for a specific criterion
+    window.applyPresetValue = () => {
+      const presetValue = document.getElementById('presetValue').value;
+      const criteria = document.getElementById('criteriaSelect').value;
+
+      if (presetValue && criteria) {
+        document.querySelectorAll(`.criteria-input[data-criteria="${criteria}"]`).forEach(input => {
+          input.value = presetValue;
+        });
       } else {
-        alert('Please fill out the KPI fields before saving.');
+        alert('Please select a criterion and enter a preset value.');
       }
     };
 
@@ -163,6 +176,22 @@
       <button onclick="addStaff()">Add Staff</button>
     </div>
 
+    <div class="form-container">
+      <h2>Apply Preset Value</h2>
+      <input type="number" id="presetValue" placeholder="Enter value" required>
+      <select id="criteriaSelect">
+        <option value="complianceLicenses">Compliance to Licenses</option>
+        <option value="nonClinicalParticipation">Non-Clinical Participation</option>
+        <option value="communicationSkills">Communication Skills</option>
+        <option value="infectionControlCompliance">Infection Control Compliance</option>
+        <option value="documentAccuracy">Document Accuracy</option>
+        <option value="dressCode">Dress Code</option>
+        <option value="ipsgCompliance">IPSG Compliance</option>
+        <option value="careCompliance">Patient Care Compliance</option>
+      </select>
+      <button onclick="applyPresetValue()">Apply to All</button>
+    </div>
+
     <h2>Staff Evaluation Table</h2>
     <table>
       <thead>
@@ -177,11 +206,11 @@
           <th>Dress Code</th>
           <th>IPSG Compliance (%)</th>
           <th>Patient Care Compliance (%)</th>
-          <th>Save</th>
+          <th>Action</th>
         </tr>
       </thead>
       <tbody id="staffTable">
-        <!-- Staff data and input fields will be populated here -->
+        <!-- Data will be inserted dynamically -->
       </tbody>
     </table>
   </div>
