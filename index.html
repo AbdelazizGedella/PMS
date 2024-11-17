@@ -62,7 +62,7 @@
           row.innerHTML = `
             <td>${data.staffId}</td>
             <td>${data.staffName}</td>
-            <td><b>${totalScore.toFixed(2)}</b></td> <!-- Display the score here as a headline -->
+            <td><b>${totalScore.toFixed(2)}</b></td> <!-- Display the total score here -->
             <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="complianceLicenses" placeholder="Compliance %" value="${data.complianceLicenses || ''}"></td>
             <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="nonClinicalParticipation" placeholder="Non-Clinical %" value="${data.nonClinicalParticipation || ''}"></td>
             <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="communicationSkills" placeholder="Communication" value="${data.communicationSkills || ''}"></td>
@@ -125,7 +125,7 @@
       }
     };
 
-    // Function to calculate the score based on weightages
+    // Function to calculate the score based on weightages (sum, not average)
     const calculateScore = (data) => {
       const scoreKeys = [
         'complianceLicensesWeightageAchieved', 'nonClinicalParticipationWeightageAchieved',
@@ -137,6 +137,7 @@
         'supportsTheTeamWeightageAchieved'
       ];
 
+      // Calculate the sum of all weightage achievements
       return scoreKeys.reduce((total, key) => total + (data[key] || 0), 0);
     };
 
@@ -170,15 +171,24 @@
     }
 
     th {
-      background-color: #f2f2f2;
+      background-color: #f4f4f4;
     }
 
-    .criteria-input {
-      width: 80px;
+    input[type="number"] {
+      width: 90%;
+      padding: 5px;
     }
 
-    #leaderboardTable {
-      margin-top: 20px;
+    button {
+      padding: 5px 10px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #218838;
     }
   </style>
 </head>
@@ -187,20 +197,18 @@
   <h2>Staff KPIs Dashboard</h2>
 
   <div>
-    <h3>Add New Staff</h3>
     <label for="staffId">Staff ID:</label>
-    <input type="text" id="staffId">
+    <input type="text" id="staffId" placeholder="Enter Staff ID">
     <label for="staffName">Staff Name:</label>
-    <input type="text" id="staffName">
+    <input type="text" id="staffName" placeholder="Enter Staff Name">
     <button onclick="addStaff()">Add Staff</button>
   </div>
 
-  <div>
-    <h3>Staff KPIs Table</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Staff ID</th>
+  <h3>Staff Performance Evaluation</h3>
+  <table>
+    <thead>
+      <tr>
+             <th>Staff ID</th>
           <th>Staff Name</th>
           <th>Score</th>
           <th>Compliance to Licenses (%) (10) </th>
@@ -216,26 +224,13 @@
           <th>Produces Quality Work (5)</th>
           <th>Open Minded (5)</th>
           <th>Supports the Team (10)</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody id="staffTable"></tbody>
-    </table>
-  </div>
-
-  <div>
-    <h3>Leaderboard</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Staff ID</th>
-          <th>Staff Name</th>
-          <th>Average Score</th>
-        </tr>
-      </thead>
-      <tbody id="leaderboardTable"></tbody>
-    </table>
-  </div>
+        <th>Save</th>
+      </tr>
+    </thead>
+    <tbody id="staffTable">
+      <!-- Dynamic content will be loaded here -->
+    </tbody>
+  </table>
 </body>
 
 </html>
