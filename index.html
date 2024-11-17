@@ -8,11 +8,9 @@
 
   <!-- Import Firebase via CDN -->
   <script type="module">
-    // Import Firebase modules (with modular approach)
     import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, doc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
-    // Firebase configuration
     const firebaseConfig = {
       apiKey: "AIzaSyBlXR9-doF3ScNlKrec7wTVeejZ3dzEgb0",
       authDomain: "pms-ef53f.firebaseapp.com",
@@ -23,110 +21,135 @@
       measurementId: "G-T4DP2JELKZ"
     };
 
-    // Initialize Firebase and Firestore
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // Function to Add New Staff
+    // Function to add new staff to the "database" collection
     window.addStaff = async () => {
       const staffId = document.getElementById('staffId').value;
       const staffName = document.getElementById('staffName').value;
 
       if (staffId && staffName) {
         try {
-          // Add staff data to Firestore
-          await addDoc(collection(db, "Staff"), {
+          await setDoc(doc(db, "database", staffId), {
             staffId: staffId,
             staffName: staffName
           });
           alert('Staff added successfully!');
           loadStaff();
         } catch (error) {
-          console.error('Error adding staff: ', error);
+          console.error('Error adding staff:', error);
         }
       } else {
         alert('Please fill out both Staff ID and Name.');
       }
     };
 
-    // Function to Load Staff List from Firebase
+    // Function to load the staff list and display evaluation criteria
     window.loadStaff = async () => {
       const staffTable = document.getElementById('staffTable');
-      staffTable.innerHTML = ''; // Clear table before loading new data
+      staffTable.innerHTML = '';
 
       try {
-        const querySnapshot = await getDocs(collection(db, "Staff"));
+        const querySnapshot = await getDocs(collection(db, "database"));
         querySnapshot.forEach((doc) => {
-          const staffId = doc.id;
-          const staffName = doc.data().staffName;
-
-          // Add a new row to the table
+          const data = doc.data();
           const row = document.createElement('tr');
           row.innerHTML = `
-            <td>${staffId}</td>
-            <td>${staffName}</td>
-            <td>
-              <button onclick="viewKPIs('${staffId}')">View KPIs</button>
-            </td>
+            <td>${data.staffId}</td>
+            <td>${data.staffName}</td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="complianceLicenses" placeholder="Compliance %"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="nonClinicalParticipation" placeholder="Non-Clinical %"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="communicationSkills" placeholder="Communication"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="infectionControlCompliance" placeholder="Infection %"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="documentAccuracy" placeholder="Accuracy %"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="dressCode" placeholder="Dress Code"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="ipsgCompliance" placeholder="IPSG %"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="careCompliance" placeholder="Care %"></td>
           `;
           staffTable.appendChild(row);
         });
       } catch (error) {
-        console.error('Error loading staff: ', error);
+        console.error('Error loading staff:', error);
       }
     };
 
-    // Function to View KPI Details
-    window.viewKPIs = async (staffId) => {
-      const modal = document.getElementById('kpiModal');
-      const modalStaffId = document.getElementById('modalStaffId');
-      const kpiData = document.getElementById('kpiData');
+    // Function to apply a preset value to all staff for a specific criterion
+    window.applyPresetValue = () => {
+      const presetValue = document.getElementById('presetValue').value;
+      const criteria = document.getElementById('criteriaSelect').value;
 
-      modalStaffId.textContent = staffId;
-      kpiData.innerHTML = ''; // Clear previous data
-
-      try {
-        const querySnapshot = await getDocs(collection(doc(db, "Staff", staffId), "KPIs"));
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          kpiData.innerHTML += `
-            <p>Compliance to Licenses: ${data.complianceLicenses}%</p>
-            <p>Non-Clinical Participation: ${data.nonClinicalParticipation}%</p>
-            <p>Communication Skills: ${data.communicationSkills}</p>
-            <p>Infection Control Compliance: ${data.infectionControlCompliance}%</p>
-            <p>Document Accuracy: ${data.documentAccuracy}%</p>
-            <p>Dress Code Compliance: ${data.dressCode}</p>
-            <p>IPSG/ESR Compliance: ${data.ipsgCompliance}%</p>
-            <p>Patient Care Compliance: ${data.careCompliance}%</p>
-            <hr>
-          `;
+      if (presetValue && criteria) {
+        document.querySelectorAll(`.criteria-input[data-criteria="${criteria}"]`).forEach(input => {
+          input.value = presetValue;
         });
-      } catch (error) {
-        console.error('Error loading KPIs: ', error);
+      } else {
+        alert('Please select a criterion and enter a preset value.');
       }
-
-      modal.style.display = 'block';
     };
 
-    // Close modal
-    window.closeModal = () => {
-      const modal = document.getElementById('kpiModal');
-      modal.style.display = 'none';
-    };
-
-    // Load Staff List on Page Load
+    // Load staff data on page load
     window.onload = loadStaff;
   </script>
 
-  <!-- Your previous CSS remains the same here -->
+  <style>
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+    }
 
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+
+    th, td {
+      border: 1px solid #333;
+      padding: 10px;
+      text-align: center;
+    }
+
+    th {
+      background-color: #1f1f1f;
+    }
+
+    input[type="number"] {
+      background-color: #2c2c2c;
+      color: #fff;
+      border: 1px solid #444;
+      padding: 5px;
+    }
+
+    button {
+      background-color: #6200ea;
+      color: #fff;
+      border: none;
+      padding: 10px 15px;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #3700b3;
+    }
+
+    .form-container {
+      margin-bottom: 20px;
+    }
+  </style>
 </head>
 
 <body>
   <div class="container">
-    <h1>Staff KPI Dashboard</h1>
+    <h1>Staff KPIs Dashboard</h1>
 
-    <!-- Form to Add New Staff -->
     <div class="form-container">
       <h2>Add New Staff</h2>
       <input type="text" id="staffId" placeholder="Staff ID" required>
@@ -134,31 +157,42 @@
       <button onclick="addStaff()">Add Staff</button>
     </div>
 
-    <!-- Table to Display Staff List -->
-    <h2>Staff List</h2>
+    <div class="form-container">
+      <h2>Apply Preset Value</h2>
+      <input type="number" id="presetValue" placeholder="Enter value" required>
+      <select id="criteriaSelect">
+        <option value="complianceLicenses">Compliance to Licenses</option>
+        <option value="nonClinicalParticipation">Non-Clinical Participation</option>
+        <option value="communicationSkills">Communication Skills</option>
+        <option value="infectionControlCompliance">Infection Control Compliance</option>
+        <option value="documentAccuracy">Document Accuracy</option>
+        <option value="dressCode">Dress Code</option>
+        <option value="ipsgCompliance">IPSG Compliance</option>
+        <option value="careCompliance">Patient Care Compliance</option>
+      </select>
+      <button onclick="applyPresetValue()">Apply to All</button>
+    </div>
+
+    <h2>Staff Evaluation Table</h2>
     <table>
       <thead>
         <tr>
           <th>Staff ID</th>
           <th>Staff Name</th>
-          <th>Action</th>
+          <th>Compliance to Licenses (%)</th>
+          <th>Non-Clinical Participation (%)</th>
+          <th>Communication Skills</th>
+          <th>Infection Control Compliance (%)</th>
+          <th>Document Accuracy (%)</th>
+          <th>Dress Code</th>
+          <th>IPSG Compliance (%)</th>
+          <th>Patient Care Compliance (%)</th>
         </tr>
       </thead>
       <tbody id="staffTable">
-        <!-- Dynamic data will be inserted here -->
+        <!-- Staff data and input fields will be populated here -->
       </tbody>
     </table>
-  </div>
-
-  <!-- KPI Modal -->
-  <div id="kpiModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="closeModal()">&times;</span>
-      <h2>KPIs for Staff ID: <span id="modalStaffId"></span></h2>
-      <div id="kpiData">
-        <!-- KPI details will be displayed here -->
-      </div>
-    </div>
   </div>
 </body>
 
