@@ -3,126 +3,18 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Staff KPI Dashboard - Firebase Integration</title>
-  <!-- Firebase SDK -->
+  <title>Staff Database Test - Firebase Integration</title>
   <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js"></script>
-  <!-- Custom CSS for Dark Mode -->
-  <style>
-    body {
-      background-color: #121212;
-      color: #ffffff;
-      font-family: Arial, sans-serif;
-    }
-    
-    .container {
-      width: 80%;
-      margin: 0 auto;
-      padding: 20px;
-    }
-    
-    h1, h2 {
-      text-align: center;
-      color: #00bfa5;
-    }
-    
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    
-    th, td {
-      padding: 12px;
-      text-align: center;
-      border-bottom: 1px solid #444;
-    }
-    
-    th {
-      background-color: #333;
-    }
-    
-    tr:nth-child(even) {
-      background-color: #1e1e1e;
-    }
-    
-    tr:hover {
-      background-color: #333;
-    }
-    
-    input, button {
-      padding: 10px;
-      margin: 5px;
-      border: none;
-      border-radius: 5px;
-    }
-    
-    input {
-      background-color: #333;
-      color: #fff;
-    }
-    
-    button {
-      background-color: #00bfa5;
-      color: #fff;
-      cursor: pointer;
-    }
-    
-    button:hover {
-      background-color: #00796b;
-    }
-    
-    .form-container {
-      margin-bottom: 20px;
-      padding: 20px;
-      background-color: #1e1e1e;
-      border-radius: 10px;
-    }
-  </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Staff KPI Dashboard</h1>
-
-    <!-- Form to Add New Staff -->
-    <div class="form-container">
-      <h2>Add New Staff</h2>
-      <input type="text" id="staffId" placeholder="Staff ID" required>
-      <input type="text" id="staffName" placeholder="Staff Name" required>
-      <button onclick="addStaff()">Add Staff</button>
-    </div>
-
-    <!-- Form to Add KPI Data for a Specific Staff Member -->
-    <div class="form-container">
-      <h2>Add KPI for Staff</h2>
-      <input type="text" id="kpiStaffId" placeholder="Staff ID" required>
-      <input type="number" id="complianceLicenses" placeholder="% Compliance to Mandatory Licenses" required>
-      <input type="number" id="nonClinicalParticipation" placeholder="% Participation in Non Clinical Activities" required>
-      <input type="number" id="communicationSkills" placeholder="Communication Skills" required>
-      <input type="number" id="infectionControlCompliance" placeholder="% Compliance to Infection Control Guidelines" required>
-      <input type="number" id="documentAccuracy" placeholder="Document Completion & Accuracy" required>
-      <input type="number" id="dressCode" placeholder="Dress Code Compliance" required>
-      <input type="number" id="ipsgCompliance" placeholder="% Compliance to IPSG/ESR Standards" required>
-      <input type="number" id="careCompliance" placeholder="% Compliance to Patient Care Management" required>
-      <button onclick="addKPI()">Add KPI</button>
-    </div>
-    
-    <!-- Table to Display Staff List -->
-    <h2>Staff List</h2>
-    <table>
-      <thead>
-        <tr>
-          <th>Staff ID</th>
-          <th>Staff Name</th>
-          <th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="staffTable">
-        <!-- Dynamic data will be inserted here -->
-      </tbody>
-    </table>
-  </div>
+  <h1>Test Firebase Staff Database</h1>
   
+  <!-- Form to Add New Staff -->
+  <input type="text" id="staffId" placeholder="Staff ID">
+  <input type="text" id="staffName" placeholder="Staff Name">
+  <button onclick="addStaff()">Add Staff</button>
+
   <!-- Firebase Initialization and JavaScript -->
   <script>
     // Firebase configuration
@@ -135,11 +27,11 @@
       appId: "1:1097061442330:web:e2713a81ef3c8cce3c02a3",
       measurementId: "G-T4DP2JELKZ"
     };
-    
+
     // Initialize Firebase
     firebase.initializeApp(firebaseConfig);
     const db = firebase.firestore();
-    
+
     // Function to Add New Staff
     function addStaff() {
       const staffId = document.getElementById('staffId').value;
@@ -150,7 +42,6 @@
           staffName: staffName
         }).then(() => {
           alert('Staff added successfully!');
-          loadStaff();
         }).catch((error) => {
           console.error('Error adding staff: ', error);
         });
@@ -158,73 +49,6 @@
         alert('Please fill out both Staff ID and Name.');
       }
     }
-
-    // Function to Add KPI Data for a Specific Staff
-    function addKPI() {
-      const kpiStaffId = document.getElementById('kpiStaffId').value;
-      const complianceLicenses = document.getElementById('complianceLicenses').value;
-      const nonClinicalParticipation = document.getElementById('nonClinicalParticipation').value;
-      const communicationSkills = document.getElementById('communicationSkills').value;
-      const infectionControlCompliance = document.getElementById('infectionControlCompliance').value;
-      const documentAccuracy = document.getElementById('documentAccuracy').value;
-      const dressCode = document.getElementById('dressCode').value;
-      const ipsgCompliance = document.getElementById('ipsgCompliance').value;
-      const careCompliance = document.getElementById('careCompliance').value;
-
-      if (kpiStaffId) {
-        db.collection('Staff').doc(kpiStaffId).collection('KPIs').add({
-          complianceLicenses: complianceLicenses,
-          nonClinicalParticipation: nonClinicalParticipation,
-          communicationSkills: communicationSkills,
-          infectionControlCompliance: infectionControlCompliance,
-          documentAccuracy: documentAccuracy,
-          dressCode: dressCode,
-          ipsgCompliance: ipsgCompliance,
-          careCompliance: careCompliance
-        }).then(() => {
-          alert('KPI data added successfully!');
-        }).catch((error) => {
-          console.error('Error adding KPI: ', error);
-        });
-      } else {
-        alert('Please provide a valid Staff ID.');
-      }
-    }
-
-    // Function to Load Staff List from Firebase
-    function loadStaff() {
-      const staffTable = document.getElementById('staffTable');
-      staffTable.innerHTML = ''; // Clear table before loading new data
-
-      db.collection('Staff').get().then((querySnapshot) => {
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          const row = `
-            <tr>
-              <td>${doc.id}</td>
-              <td>${data.staffName}</td>
-              <td><button onclick="viewKPIs('${doc.id}')">View KPIs</button></td>
-            </tr>
-          `;
-          staffTable.innerHTML += row;
-        });
-      });
-    }
-
-    // Function to View KPIs of a Staff Member (console log for now)
-    function viewKPIs(staffId) {
-      db.collection('Staff').doc(staffId).collection('KPIs').get().then((querySnapshot) => {
-        console.log(`KPIs for Staff ID ${staffId}:`);
-        querySnapshot.forEach((doc) => {
-          console.log(doc.data());
-        });
-      }).catch((error) => {
-        console.error('Error retrieving KPIs: ', error);
-      });
-    }
-
-    // Load data when the page loads
-    window.onload = loadStaff;
   </script>
 </body>
 </html>
