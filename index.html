@@ -58,22 +58,22 @@
 
           // Calculate the score based on the criteria values
           const totalScore = calculateScore(data);
-          
+
           row.innerHTML = `
             <td>${data.staffId}</td>
             <td>${data.staffName}</td>
             <td><b>${totalScore.toFixed(2)}</b></td> <!-- Display the total score here -->
             <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="complianceLicenses" placeholder="Compliance %" value="${data.complianceLicenses || ''}"></td>
             <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="nonClinicalParticipation" placeholder="Non-Clinical %" value="${data.nonClinicalParticipation || ''}"></td>
-            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="communicationSkills" placeholder="Communication" value="${data.communicationSkills || ''}"></td>
-            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="infectionControlCompliance" placeholder="Infection %" value="${data.infectionControlCompliance || ''}"></td>
-            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="documentAccuracy" placeholder="Accuracy %" value="${data.documentAccuracy || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="communicationSkills" placeholder="Communication Skills" value="${data.communicationSkills || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="infectionControlCompliance" placeholder="Infection Control %" value="${data.infectionControlCompliance || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="documentAccuracy" placeholder="Document Accuracy %" value="${data.documentAccuracy || ''}"></td>
             <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="dressCode" placeholder="Dress Code" value="${data.dressCode || ''}"></td>
-            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="ipsgCompliance" placeholder="IPSG %" value="${data.ipsgCompliance || ''}"></td>
-            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="careCompliance" placeholder="Care %" value="${data.careCompliance || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="ipsgCompliance" placeholder="IPSG Compliance %" value="${data.ipsgCompliance || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="careCompliance" placeholder="Care Compliance %" value="${data.careCompliance || ''}"></td>
             <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="worksHard" placeholder="Works Hard" value="${data.worksHard || ''}"></td>
-            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="focusesOnEfficiency" placeholder="Focuses on Efficiency" value="${data.focusesOnEfficiency || ''}"></td>
-            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="producesQualityWork" placeholder="Produces Quality Work" value="${data.producesQualityWork || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="focusesOnEfficiency" placeholder="Efficiency" value="${data.focusesOnEfficiency || ''}"></td>
+            <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="producesQualityWork" placeholder="Quality Work" value="${data.producesQualityWork || ''}"></td>
             <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="openMinded" placeholder="Open Minded" value="${data.openMinded || ''}"></td>
             <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="supportsTheTeam" placeholder="Supports the Team" value="${data.supportsTheTeam || ''}"></td>
             <td><button onclick="saveKPI('${data.staffId}')">Save</button></td>
@@ -91,13 +91,29 @@
       const kpiData = {};
       const targetData = {
         complianceLicenses: 100,
-        nonClinicalParticipation: 90,
-        communicationSkills: 80,
+        nonClinicalParticipation: 100,
+        communicationSkills: 100,
         infectionControlCompliance: 100,
         documentAccuracy: 100,
         dressCode: 10,
         ipsgCompliance: 100,
-        careCompliance: 95,
+        careCompliance: 100,
+        worksHard: 5,
+        focusesOnEfficiency: 5,
+        producesQualityWork: 5,
+        openMinded: 5,
+        supportsTheTeam: 10
+      };
+
+      const weights = {
+        complianceLicenses: 10,
+        nonClinicalParticipation: 5,
+        communicationSkills: 5,
+        infectionControlCompliance: 10,
+        documentAccuracy: 10,
+        dressCode: 10,
+        ipsgCompliance: 10,
+        careCompliance: 10,
         worksHard: 5,
         focusesOnEfficiency: 5,
         producesQualityWork: 5,
@@ -109,9 +125,9 @@
         const criteria = input.dataset.criteria;
         const target = targetData[criteria] || 0;
         const targetAchieved = input.value ? parseFloat(input.value) : 0;
-        const weightage = (criteria === 'worksHard' || criteria === 'focusesOnEfficiency' || criteria === 'producesQualityWork' || criteria === 'openMinded') ? 5 : (criteria === 'supportsTheTeam' ? 10 : 0);
+        const weightage = weights[criteria] || 0;
         const weightageAchieved = ((targetAchieved / target) * weightage) || 0;
-        
+
         kpiData[criteria] = input.value ? parseFloat(input.value) : null;
         kpiData[`${criteria}WeightageAchieved`] = weightageAchieved;
       });
@@ -158,37 +174,66 @@
       color: #333;
     }
 
+   
     table {
       width: 100%;
       border-collapse: collapse;
-      margin: 20px 0;
+      margin-top: 20px;
     }
 
-    th, td {
-      padding: 10px;
-      text-align: center;
+    table, th, td {
       border: 1px solid #ddd;
     }
 
-    th {
-      background-color: #f4f4f4;
+    th, td {
+      padding: 8px;
+      text-align: center;
     }
 
-    input[type="number"] {
-      width: 90%;
+    th {
+      background-color: #f2f2f2;
+    }
+
+    .criteria-input {
+      width: 70px;
       padding: 5px;
+      text-align: center;
     }
 
     button {
       padding: 5px 10px;
-      background-color: #28a745;
+      background-color: #4CAF50;
       color: white;
       border: none;
       cursor: pointer;
     }
 
     button:hover {
-      background-color: #218838;
+      background-color: #45a049;
+    }
+
+    .form-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .form-container input {
+      margin: 5px;
+      padding: 10px;
+      width: 200px;
+    }
+
+    .form-container button {
+      padding: 10px 20px;
+      background-color: #008CBA;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    .form-container button:hover {
+      background-color: #007B9E;
     }
   </style>
 </head>
@@ -196,19 +241,18 @@
 <body>
   <h2>Staff KPIs Dashboard</h2>
 
-  <div>
-    <label for="staffId">Staff ID:</label>
-    <input type="text" id="staffId" placeholder="Enter Staff ID">
-    <label for="staffName">Staff Name:</label>
-    <input type="text" id="staffName" placeholder="Enter Staff Name">
+  <!-- Form to add new staff -->
+  <div class="form-container">
+    <input type="text" id="staffId" placeholder="Staff ID" />
+    <input type="text" id="staffName" placeholder="Staff Name" />
     <button onclick="addStaff()">Add Staff</button>
   </div>
 
-  <h3>Staff Performance Evaluation</h3>
+  <!-- Table to display KPIs and scores -->
   <table>
     <thead>
       <tr>
-             <th>Staff ID</th>
+              <th>Staff ID</th>
           <th>Staff Name</th>
           <th>Score</th>
           <th>Compliance to Licenses (%) (10) </th>
@@ -224,12 +268,10 @@
           <th>Produces Quality Work (5)</th>
           <th>Open Minded (5)</th>
           <th>Supports the Team (10)</th>
-        <th>Save</th>
+        <th>Actions</th>
       </tr>
     </thead>
-    <tbody id="staffTable">
-      <!-- Dynamic content will be loaded here -->
-    </tbody>
+    <tbody id="staffTable"></tbody>
   </table>
 </body>
 
