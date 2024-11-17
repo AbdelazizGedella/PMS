@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KPI Dashboard - Dark Mode</title>
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js"></script>
+  <!-- Custom CSS for Dark Mode -->
+  <style>
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+    }
+    
+    .container {
+      width: 80%;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    
+    h1 {
+      text-align: center;
+      color: #00bfa5;
+    }
+    
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    
+    th, td {
+      padding: 12px;
+      text-align: center;
+      border-bottom: 1px solid #444;
+    }
+    
+    th {
+      background-color: #333;
+    }
+    
+    tr:nth-child(even) {
+      background-color: #1e1e1e;
+    }
+    
+    tr:hover {
+      background-color: #333;
+    }
+    
+    input, button {
+      padding: 10px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+    }
+    
+    input {
+      background-color: #333;
+      color: #fff;
+    }
+    
+    button {
+      background-color: #00bfa5;
+      color: #fff;
+      cursor: pointer;
+    }
+    
+    button:hover {
+      background-color: #00796b;
+    }
+    
+    .form-container {
+      margin-bottom: 20px;
+      padding: 20px;
+      background-color: #1e1e1e;
+      border-radius: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>KPI Dashboard - Dark Mode</h1>
+    
+    <!-- Form to Add/Update KPI Data -->
+    <div class="form-container">
+      <h2>Add/Update KPI Data</h2>
+      <input type="text" id="staffId" placeholder="Staff ID" required>
+      <input type="text" id="staffName" placeholder="Staff Name" required>
+      <input type="number" id="complianceLicenses" placeholder="% Compliance to Mandatory Licenses" required>
+      <input type="number" id="nonClinicalParticipation" placeholder="% Participation in Non Clinical Activities" required>
+      <input type="number" id="communicationSkills" placeholder="Communication Skills" required>
+      <input type="number" id="infectionControlCompliance" placeholder="% Compliance to Infection Control Guidelines" required>
+      <input type="number" id="documentAccuracy" placeholder="Document Completion & Accuracy" required>
+      <input type="number" id="dressCode" placeholder="Dress Code Compliance" required>
+      <input type="number" id="ipsgCompliance" placeholder="% Compliance to IPSG/ESR Standards" required>
+      <input type="number" id="careCompliance" placeholder="% Compliance to Patient Care Management" required>
+      <button onclick="addOrUpdateKPI()">Add/Update KPI</button>
+    </div>
+    
+    <!-- Table to Display KPI Data -->
+    <table>
+      <thead>
+        <tr>
+          <th>Staff ID</th>
+          <th>Staff Name</th>
+          <th>Compliance to Mandatory Licenses</th>
+          <th>Participation in Non Clinical Activities</th>
+          <th>Communication Skills</th>
+          <th>Infection Control Compliance</th>
+          <th>Document Accuracy</th>
+          <th>Dress Code Compliance</th>
+          <th>IPSG Compliance</th>
+          <th>Care Management Compliance</th>
+        </tr>
+      </thead>
+      <tbody id="kpiTable">
+        <!-- Dynamic data will be inserted here -->
+      </tbody>
+    </table>
+  </div>
+  
+  <!-- Firebase Initialization and JavaScript -->
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_PROJECT_ID.appspot.com",
+      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+    
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    
+    // Function to Add/Update KPI Data
+    function addOrUpdateKPI() {
+      const staffId = document.getElementById('staffId').value;
+      const staffName = document.getElementById('staffName').value;
+      const complianceLicenses = document.getElementById('complianceLicenses').value;
+      const nonClinicalParticipation = document.getElementById('nonClinicalParticipation').value;
+      const communicationSkills = document.getElementById('communicationSkills').value;
+      const infectionControlCompliance = document.getElementById('infectionControlCompliance').value;
+      const documentAccuracy = document.getElementById('documentAccuracy').value;
+      const dressCode = document.getElementById('dressCode').value;
+      const ipsgCompliance = document.getElementById('ipsgCompliance').value;
+      const careCompliance = document.getElementById('careCompliance').value;
+      
+      db.collection('KPIs').doc(staffId).set({
+        staffName,
+        complianceLicenses,
+        nonClinicalParticipation,
+        communicationSkills,
+        infectionControlCompliance,
+        documentAccuracy,
+        dressCode,
+        ipsgCompliance,
+        careCompliance
+      }).then(() => {
+        alert('KPI data added/updated successfully!');
+        loadKPIData();
+      }).catch((error) => {
+        console.error('Error writing document: ', error);
+      });
+    }
+    
+    // Function to Load KPI Data from Firebase
+    function loadKPIData() {
+      const tableBody = document.getElementById('kpiTable');
+      tableBody.innerHTML = ''; // Clear table before loading new data
+      
+      db.collection('KPIs').get().then((querySnapshot) => {
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const row = `
+            <tr>
+              <td>${doc.id}</td>
+              <td>${data.staffName}</td>
+              <td>${data.complianceLicenses}</td>
+              <td>${data.nonClinicalParticipation}</td>
+              <td>${data.communicationSkills}</td>
+              <td>${data.infectionControlCompliance}</td>
+              <td>${data.documentAccuracy}</td>
+              <td>${data.dressCode}</td>
+              <td>${data.ipsgCompliance}</td>
+              <td>${data.careCompliance}</td>
+            </tr>
+          `;
+          tableBody.innerHTML += row;
+        });
+      });
+    }
+    
+    // Load data when the page loads
+    window.onload = loadKPIData;
+  </script>
+</body>
+</html>
