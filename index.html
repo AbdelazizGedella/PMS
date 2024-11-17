@@ -66,6 +66,7 @@
             <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="dressCode" placeholder="Dress Code"></td>
             <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="ipsgCompliance" placeholder="IPSG %"></td>
             <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="careCompliance" placeholder="Care %"></td>
+            <td><button onclick="saveKPI('${data.staffId}')">Save</button></td>
           `;
           staffTable.appendChild(row);
         });
@@ -74,17 +75,22 @@
       }
     };
 
-    // Function to apply a preset value to all staff for a specific criterion
-    window.applyPresetValue = () => {
-      const presetValue = document.getElementById('presetValue').value;
-      const criteria = document.getElementById('criteriaSelect').value;
+    // Function to save the KPIs for a specific staff
+    window.saveKPI = async (staffId) => {
+      const kpis = {};
+      document.querySelectorAll(`.criteria-input[data-staff-id="${staffId}"]`).forEach(input => {
+        kpis[input.dataset.criteria] = input.value;
+      });
 
-      if (presetValue && criteria) {
-        document.querySelectorAll(`.criteria-input[data-criteria="${criteria}"]`).forEach(input => {
-          input.value = presetValue;
-        });
+      if (Object.keys(kpis).length > 0) {
+        try {
+          await setDoc(doc(db, "KPI", staffId), kpis);
+          alert('KPI saved successfully!');
+        } catch (error) {
+          console.error('Error saving KPI:', error);
+        }
       } else {
-        alert('Please select a criterion and enter a preset value.');
+        alert('Please fill out the KPI fields before saving.');
       }
     };
 
@@ -157,22 +163,6 @@
       <button onclick="addStaff()">Add Staff</button>
     </div>
 
-    <div class="form-container">
-      <h2>Apply Preset Value</h2>
-      <input type="number" id="presetValue" placeholder="Enter value" required>
-      <select id="criteriaSelect">
-        <option value="complianceLicenses">Compliance to Licenses</option>
-        <option value="nonClinicalParticipation">Non-Clinical Participation</option>
-        <option value="communicationSkills">Communication Skills</option>
-        <option value="infectionControlCompliance">Infection Control Compliance</option>
-        <option value="documentAccuracy">Document Accuracy</option>
-        <option value="dressCode">Dress Code</option>
-        <option value="ipsgCompliance">IPSG Compliance</option>
-        <option value="careCompliance">Patient Care Compliance</option>
-      </select>
-      <button onclick="applyPresetValue()">Apply to All</button>
-    </div>
-
     <h2>Staff Evaluation Table</h2>
     <table>
       <thead>
@@ -187,6 +177,7 @@
           <th>Dress Code</th>
           <th>IPSG Compliance (%)</th>
           <th>Patient Care Compliance (%)</th>
+          <th>Save</th>
         </tr>
       </thead>
       <tbody id="staffTable">
