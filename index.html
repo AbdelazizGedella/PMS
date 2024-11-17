@@ -55,9 +55,14 @@
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           const row = document.createElement('tr');
+
+          // Calculate the score based on the criteria values
+          const totalScore = calculateScore(data);
+          
           row.innerHTML = `
             <td>${data.staffId}</td>
             <td>${data.staffName}</td>
+            <td><b>${totalScore.toFixed(2)}</b></td> <!-- Display the score here as a headline -->
             <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="complianceLicenses" placeholder="Compliance %" value="${data.complianceLicenses || ''}"></td>
             <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="nonClinicalParticipation" placeholder="Non-Clinical %" value="${data.nonClinicalParticipation || ''}"></td>
             <td><input type="number" class="criteria-input" data-staff-id="${data.staffId}" data-criteria="communicationSkills" placeholder="Communication" value="${data.communicationSkills || ''}"></td>
@@ -120,74 +125,24 @@
       }
     };
 
-    // Function to generate the Weightage Score Table
-    window.generateWeightageTable = async () => {
-      const weightageTable = document.getElementById('weightageTable');
-      const weightageData = {
-        complianceLicenses: 10,
-        nonClinicalParticipation: 5,
-        communicationSkills: 5,
-        infectionControlCompliance: 10,
-        documentAccuracy: 10,
-        dressCode: 10,
-        ipsgCompliance: 10,
-        careCompliance: 10,
-        worksHard: 5,
-        focusesOnEfficiency: 5,
-        producesQualityWork: 5,
-        openMinded: 5,
-        supportsTheTeam: 10
-      };
+    // Function to calculate the score based on weightages
+    const calculateScore = (data) => {
+      const scoreKeys = [
+        'complianceLicensesWeightageAchieved', 'nonClinicalParticipationWeightageAchieved',
+        'communicationSkillsWeightageAchieved', 'infectionControlComplianceWeightageAchieved',
+        'documentAccuracyWeightageAchieved', 'dressCodeWeightageAchieved',
+        'ipsgComplianceWeightageAchieved', 'careComplianceWeightageAchieved',
+        'worksHardWeightageAchieved', 'focusesOnEfficiencyWeightageAchieved',
+        'producesQualityWorkWeightageAchieved', 'openMindedWeightageAchieved',
+        'supportsTheTeamWeightageAchieved'
+      ];
 
-      Object.entries(weightageData).forEach(([criteria, weight]) => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${criteria}</td>
-          <td>${weight}</td>
-        `;
-        weightageTable.appendChild(row);
-      });
-    };
-
-    // Function to generate the Leaderboard
-    window.generateLeaderboard = async () => {
-      const leaderboardTable = document.getElementById('leaderboardTable');
-      leaderboardTable.innerHTML = '';
-      
-      try {
-        const querySnapshot = await getDocs(collection(db, "KPI"));
-        const staffData = [];
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          const totalScore = Object.keys(data).reduce((acc, key) => {
-            if (key.includes('WeightageAchieved')) acc += data[key] || 0;
-            return acc;
-          }, 0);
-          const avgScore = totalScore / 14; // Average based on 14 criteria
-          staffData.push({ staffId: data.staffId, staffName: data.staffName, avgScore });
-        });
-
-        staffData.sort((a, b) => b.avgScore - a.avgScore); // Sort by avg score
-
-        staffData.forEach((staff, index) => {
-          const row = document.createElement('tr');
-          row.innerHTML = `
-            <td>${index + 1}</td>
-            <td>${staff.staffName}</td>
-            <td>${staff.avgScore.toFixed(2)}</td>
-          `;
-          leaderboardTable.appendChild(row);
-        });
-      } catch (error) {
-        console.error('Error generating leaderboard:', error);
-      }
+      return scoreKeys.reduce((total, key) => total + (data[key] || 0), 0);
     };
 
     // Initialize and load staff data on page load
     window.onload = () => {
       loadStaff();
-      generateWeightageTable();
-      generateLeaderboard();
     };
   </script>
 
@@ -215,87 +170,65 @@
     }
 
     th {
-      background-color: #333;
-      color: white;
+      background-color: #f2f2f2;
     }
 
     .criteria-input {
-      background-color: #f1f1f1;
-      border: none;
-      padding: 5px;
-      width: 100%;
-      box-sizing: border-box;
+      width: 80px;
     }
 
-    button {
-      background-color: #28a745;
-      color: white;
-      border: none;
-      padding: 10px;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #218838;
+    #leaderboardTable {
+      margin-top: 20px;
     }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <h2>Staff KPI Management</h2>
+  <h2>Staff KPIs Dashboard</h2>
 
-    <!-- Staff Entry Form -->
-    <form id="staffForm">
-      <input type="text" id="staffId" placeholder="Staff ID" required>
-      <input type="text" id="staffName" placeholder="Staff Name" required>
-      <button type="button" onclick="addStaff()">Add Staff</button>
-    </form>
+  <div>
+    <h3>Add New Staff</h3>
+    <label for="staffId">Staff ID:</label>
+    <input type="text" id="staffId">
+    <label for="staffName">Staff Name:</label>
+    <input type="text" id="staffName">
+    <button onclick="addStaff()">Add Staff</button>
+  </div>
 
-    <!-- Staff KPI Entries Table -->
-    <h3>Staff KPI Entries</h3>
+  <div>
+    <h3>Staff KPIs Table</h3>
     <table>
       <thead>
         <tr>
           <th>Staff ID</th>
           <th>Staff Name</th>
-          <th>% Compliance to Mandatory Licenses</th>
-          <th>% Participation in Non Clinical Activities</th>
+          <th>Score</th>
+          <th>Compliance to Licenses (%)</th>
+          <th>Non-Clinical Participation (%)</th>
           <th>Communication Skills</th>
-          <th>Compliance to Infection Control Guidelines</th>
-          <th>Document Completion & Accuracy</th>
-          <th>Dress Code Compliance</th>
-          <th>% Compliance to IPSG/ESR Standards</th>
-          <th>% Compliance to Patient Care Management</th>
+          <th>Infection Control Compliance (%)</th>
+          <th>Document Accuracy (%)</th>
+          <th>Dress Code</th>
+          <th>IPSG Compliance (%)</th>
+          <th>Care Compliance (%)</th>
           <th>Works Hard</th>
           <th>Focuses on Efficiency</th>
           <th>Produces Quality Work</th>
           <th>Open Minded</th>
           <th>Supports the Team</th>
-          <th>Action</th>
+          <th>Actions</th>
         </tr>
       </thead>
       <tbody id="staffTable"></tbody>
     </table>
+  </div>
 
-    <!-- Weightage Score Table -->
-    <h3>Weightage Score Table</h3>
-    <table>
-      <thead>
-        <tr>
-          <th>Criteria</th>
-          <th>Weightage</th>
-        </tr>
-      </thead>
-      <tbody id="weightageTable"></tbody>
-    </table>
-
-    <!-- Leaderboard Table -->
+  <div>
     <h3>Leaderboard</h3>
     <table>
       <thead>
         <tr>
-          <th>Rank</th>
+          <th>Staff ID</th>
           <th>Staff Name</th>
           <th>Average Score</th>
         </tr>
