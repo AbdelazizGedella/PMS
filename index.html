@@ -120,21 +120,86 @@
       }
     };
 
-    // Load staff data on page load
-    window.onload = loadStaff;
+    // Function to generate the Weightage Score Table
+    window.generateWeightageTable = async () => {
+      const weightageTable = document.getElementById('weightageTable');
+      const weightageData = {
+        complianceLicenses: 10,
+        nonClinicalParticipation: 5,
+        communicationSkills: 5,
+        infectionControlCompliance: 10,
+        documentAccuracy: 10,
+        dressCode: 10,
+        ipsgCompliance: 10,
+        careCompliance: 10,
+        worksHard: 5,
+        focusesOnEfficiency: 5,
+        producesQualityWork: 5,
+        openMinded: 5,
+        supportsTheTeam: 10
+      };
+
+      Object.entries(weightageData).forEach(([criteria, weight]) => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${criteria}</td>
+          <td>${weight}</td>
+        `;
+        weightageTable.appendChild(row);
+      });
+    };
+
+    // Function to generate the Leaderboard
+    window.generateLeaderboard = async () => {
+      const leaderboardTable = document.getElementById('leaderboardTable');
+      leaderboardTable.innerHTML = '';
+      
+      try {
+        const querySnapshot = await getDocs(collection(db, "KPI"));
+        const staffData = [];
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const totalScore = Object.keys(data).reduce((acc, key) => {
+            if (key.includes('WeightageAchieved')) acc += data[key] || 0;
+            return acc;
+          }, 0);
+          const avgScore = totalScore / 14; // Average based on 14 criteria
+          staffData.push({ staffId: data.staffId, staffName: data.staffName, avgScore });
+        });
+
+        staffData.sort((a, b) => b.avgScore - a.avgScore); // Sort by avg score
+
+        staffData.forEach((staff, index) => {
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${staff.staffName}</td>
+            <td>${staff.avgScore.toFixed(2)}</td>
+          `;
+          leaderboardTable.appendChild(row);
+        });
+      } catch (error) {
+        console.error('Error generating leaderboard:', error);
+      }
+    };
+
+    // Initialize and load staff data on page load
+    window.onload = () => {
+      loadStaff();
+      generateWeightageTable();
+      generateLeaderboard();
+    };
   </script>
 
   <style>
     body {
-      background-color: #121212;
-      color: #ffffff;
       font-family: Arial, sans-serif;
+      margin: 20px;
     }
 
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 20px;
+    h2, h3 {
+      text-align: center;
+      color: #333;
     }
 
     table {
@@ -151,11 +216,11 @@
 
     th {
       background-color: #333;
+      color: white;
     }
 
     .criteria-input {
-      background-color: #212121;
-      color: #fff;
+      background-color: #f1f1f1;
       border: none;
       padding: 5px;
       width: 100%;
@@ -179,12 +244,15 @@
 <body>
   <div class="container">
     <h2>Staff KPI Management</h2>
+
+    <!-- Staff Entry Form -->
     <form id="staffForm">
       <input type="text" id="staffId" placeholder="Staff ID" required>
       <input type="text" id="staffName" placeholder="Staff Name" required>
       <button type="button" onclick="addStaff()">Add Staff</button>
     </form>
 
+    <!-- Staff KPI Entries Table -->
     <h3>Staff KPI Entries</h3>
     <table>
       <thead>
@@ -207,9 +275,32 @@
           <th>Action</th>
         </tr>
       </thead>
-      <tbody id="staffTable">
-        <!-- Data will be inserted dynamically -->
-      </tbody>
+      <tbody id="staffTable"></tbody>
+    </table>
+
+    <!-- Weightage Score Table -->
+    <h3>Weightage Score Table</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Criteria</th>
+          <th>Weightage</th>
+        </tr>
+      </thead>
+      <tbody id="weightageTable"></tbody>
+    </table>
+
+    <!-- Leaderboard Table -->
+    <h3>Leaderboard</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Staff Name</th>
+          <th>Average Score</th>
+        </tr>
+      </thead>
+      <tbody id="leaderboardTable"></tbody>
     </table>
   </div>
 </body>
